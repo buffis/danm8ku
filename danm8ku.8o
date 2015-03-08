@@ -1,0 +1,279 @@
+# Position (4)
+:alias x    v4
+:alias x_f  v6
+:alias y    v5
+:alias y_f  v7
+
+# Velocity (4)
+:alias vx   v0
+:alias vy   v1
+
+# Acceleration (2)
+:alias ax   v2
+:alias ay   v3
+
+:const BULLET_AREA 2000
+
+: bullet_count 0
+
+: player_position 5 15
+
+: ticks 0
+
+: bul   0xc0 0xc0
+
+: player_sprite 0xC0 0x60 0xC0
+
+# OUCH
+: ouch_sprite1 0xEA 0xAA 0xAA 0xAA 0xEE 
+: ouch_sprite2 0xEA 0x8A 0x8E 0x8A 0xEA
+
+: destroy_bullet
+    vx := 255
+    save_bullet
+;
+
+: move_bullet
+    # Handles velocity for x
+    vc := vx
+    vx <<= vx      # multiply by two and check for neg bit             
+    va := vf       # is negative velocity?
+    x_f += vx      # add v to fractional x
+    vx := vc
+
+    # Hack to avoid calling subroutines to do:
+    # if vf != 0 -> (va==0 -> x+=1, va==1 -> x-=1)
+    # on fractional overflow
+    va &= vf
+    x += vf
+    x -= va
+    x -= va
+
+    # Handles velocity for y
+    vc := vy
+    vy <<= vy      # multiply by two and check for neg bit       
+    va := vf       # is negative velocity?
+    y_f += vy      # add v to fractional x
+    vy := vc
+
+    # Hack to avoid calling subroutines to do:
+    # if vf != 0 -> (va==0 -> y+=1, va==1 -> y-=1)
+    # on fractional overflow
+    va &= vf
+    y += vf
+    y -= va
+    y -= va
+
+    # Handles acceleration for x
+    vc := ax
+    vc <<= vc      # multiply by two and check for neg bit             
+    va := vf       # is negative velocity?
+    vc >>= vc      # shift back, cause why not
+    
+    # ... keeps handling acceleration for x
+    if va == 0 begin        # positive acceleration
+        if vx > 127 begin   # negative velocity
+            vx -= ax
+            if vf == 0 then vx := 127  # overflow (wat?)
+            if vx < 128 then vx := 0
+
+        else            # positive velocity
+            vx += ax
+            if vf != 0 then vx := 127  # overflow
+            if vx > 127 then vx := 127
+        end
+     
+    else                    # negative acceleration
+        if vx > 127 begin   # negative velocity
+            vx += vc
+            if vf != 0 then vx := 254   # hack
+            if vx == 255 then vx := 254 # hack 
+        else            # positive velocity
+            vx -= vc
+            if vf == 0 then vx := 129  # overflow
+        end
+    end
+
+    # Do bounds checks
+    if x == -1 then destroy_bullet
+    if y == -1 then destroy_bullet
+    if x == 62 then destroy_bullet
+    if y == 30 then destroy_bullet
+;
+
+: save_bullet
+    i := BULLET_AREA
+    i += vb
+    save v7
+;
+
+: draw_bullets
+    vb := 0 # offset
+    loop
+        i := BULLET_AREA
+        i += vb
+        load v7
+        
+        # draw bullet if active
+        if vx != 255 begin i := bul sprite x y 2 end 
+        
+        vb += 8 # sizeof bullet
+        if vb != 0 then
+    again
+;
+
+: act_bullets
+    vb := 0 # offset
+    loop
+        i := BULLET_AREA
+        i += vb
+        load v7
+        
+        if vx != 255 then move_bullet
+        if vx != 255 then save_bullet
+        
+        vb += 8 # sizeof bullet
+        if vb != 0 then
+    again
+;
+
+: clear_bullets
+    vb := 0 # offset
+    i := BULLET_AREA
+    v0 := 255 v1 := 0 v2 := 0 v3 := 0
+    v4 := 0   v5 := 0 v6 := 0 v7 := 0 
+    loop
+        save v7
+        vb += 1
+        if vb != 32 then
+    again
+;
+
+: gogo_bullet
+    i := bullet_count
+    load v0
+    
+    i := BULLET_AREA
+    i += v0
+    load v7
+
+    if vx == 255 begin
+        i := bullet_count
+        load v0
+        va := v0
+        v0 += 8
+        i := bullet_count
+        save v0
+    end
+
+    i := BULLET_AREA
+    i += va
+;
+
+: sync
+    loop
+        vf := delay
+        if vf != 0 then
+    again
+    vf := 1
+    delay := vf
+;
+
+: tick
+    i := ticks
+    load v0
+    v0 += 1
+    i := ticks
+    save v0
+;
+
+: update_player
+    i := player_position
+    load v1
+
+    v2 := 5
+    if v2 key begin
+        v1 += -1
+        if v1 == 0 then v1 := 1
+    end
+    v2 := 7
+    if v2 key begin
+        v0 += -1
+        if v0 == 0 then v0 := 1
+    end
+    v2 := 9
+    if v2 key begin
+        v0 += 1
+        if v0 == 35 then v0 := 34
+    end
+    v2 := 8
+    if v2 key begin
+        v1 += 1
+        if v1 == 60 then v1 := 59
+    end
+
+    i := player_position
+    save v1
+
+    i := player_position
+    load v1
+    v3 >>= v1
+    v2 >>= v0
+    i := player_sprite
+    sprite v2 v3 3
+;
+
+: pattern2_shot1
+    vc := random 31
+    
+    gogo_bullet x := 60 y := vc vx := 150 vy := 0 ax := 130 save v7 
+    gogo_bullet x := 60 y := vc vx := 150 vy := 0 ax := 134 save v7 
+    gogo_bullet x := 45 y := vc vx := 75 vy := 135 ax := 130 save v7    
+    gogo_bullet x := 45 y := vc vx := 75 vy := 10 ax := 130 save v7 
+;
+
+: pattern2
+    v0 := 0b00001111
+    v0 &= vd
+    if v0 == 0b00001111 then pattern2_shot1
+;
+
+: show_you_lose_screen
+    clear
+
+    i := ouch_sprite1
+    v0 := 25
+    v1 := 13
+    sprite v0 v1 5
+    i := ouch_sprite2
+    v0 += 8
+    sprite v0 v1 5
+    v0 := key
+    v0 := key
+;   
+
+: main
+    clear_bullets
+    
+    loop
+        clear
+
+        draw_bullets # do this first cause...
+        update_player
+
+        if vf != 1 begin
+            act_bullets  # ... this takes a long time
+
+            i := ticks
+            load v0
+            vd := v0
+            pattern2
+        
+            tick
+
+            sync
+        else
+            show_you_lose_screen
+            clear_bullets
+        end
+    again
