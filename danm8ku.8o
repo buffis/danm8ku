@@ -391,6 +391,19 @@
 
             i := pattern_state
             load v0
+            vf := 1
+            v0 &= vf
+            if v0 == 1 begin
+                if vd == 140 begin
+                    v0 := 254
+                    i := ticks
+                    save v0
+                end
+            end
+
+    
+        i := pattern_state
+            load v0
             if v0 == 0 begin
         pattern1
         end
