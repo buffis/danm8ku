@@ -273,6 +273,84 @@
     end
 ;
 
+: pattern3
+    if vd == 0 begin
+        gogo_bullet x := 60 y := 16 vx := 207 vy := 50 save v7
+    end
+    if vd == 10 begin
+        gogo_bullet x := 60 y := 16 vx := 211 vy := 46 save v7
+    end
+    if vd == 20 begin
+        gogo_bullet x := 60 y := 16 vx := 215 vy := 42 save v7
+    end
+    if vd == 30 begin
+        gogo_bullet x := 60 y := 16 vx := 219 vy := 38 save v7
+    end
+    if vd == 40 begin
+        gogo_bullet x := 60 y := 16 vx := 223 vy := 34 save v7
+    end
+    if vd == 50 begin
+        gogo_bullet x := 60 y := 16 vx := 227 vy := 30 save v7
+    end
+    if vd == 60 begin
+        gogo_bullet x := 60 y := 16 vx := 231 vy := 26 save v7
+    end
+    if vd == 70 begin
+        gogo_bullet x := 60 y := 16 vx := 235 vy := 22 save v7
+    end
+    if vd == 80 begin
+        gogo_bullet x := 60 y := 16 vx := 239 vy := 18 save v7
+    end
+    if vd == 90 begin
+        gogo_bullet x := 60 y := 16 vx := 243 vy := 14 save v7
+    end
+    if vd == 100 begin
+        gogo_bullet x := 60 y := 16 vx := 247 vy := 10 save v7
+    end
+    if vd == 110 begin
+        gogo_bullet x := 60 y := 16 vx := 251 vy := 6 save v7
+    end
+    if vd == 120 begin
+        gogo_bullet x := 60 y := 16 vx := 254 vy := 2 save v7
+    end
+    if vd == 130 begin
+        gogo_bullet x := 60 y := 16 vx := 251 vy := 130 save v7
+    end
+    if vd == 140 begin
+        gogo_bullet x := 60 y := 16 vx := 247 vy := 134 save v7
+    end
+    if vd == 150 begin
+        gogo_bullet x := 60 y := 16 vx := 243 vy := 138 save v7
+    end
+    if vd == 160 begin
+        gogo_bullet x := 60 y := 16 vx := 239 vy := 142 save v7
+    end
+    if vd == 170 begin
+        gogo_bullet x := 60 y := 16 vx := 235 vy := 146 save v7
+    end
+    if vd == 180 begin
+        gogo_bullet x := 60 y := 16 vx := 231 vy := 150 save v7
+    end
+    if vd == 190 begin
+        gogo_bullet x := 60 y := 16 vx := 227 vy := 154 save v7
+    end
+    if vd == 200 begin
+        gogo_bullet x := 60 y := 16 vx := 223 vy := 158 save v7
+    end
+    if vd == 210 begin
+        gogo_bullet x := 60 y := 16 vx := 219 vy := 162 save v7
+    end
+    if vd == 220 begin
+        gogo_bullet x := 60 y := 16 vx := 215 vy := 166 save v7
+    end
+    if vd == 230 begin
+        gogo_bullet x := 60 y := 16 vx := 211 vy := 170 save v7
+    end
+    if vd == 240 begin
+        gogo_bullet x := 60 y := 16 vx := 207 vy := 174 save v7
+    end
+;
+
 : show_you_lose_screen
     clear
 
@@ -313,13 +391,30 @@
 
             i := pattern_state
             load v0
-            if v0 == 0 then
-                pattern1
-            if v0 == 2 then
+            if v0 == 0 begin
+        pattern1
+        end
+
+            i := pattern_state
+            load v0
+            if v0 == 2 begin
                 pattern2
+        end
+
+        i := pattern_state
+            load v0
+            if v0 == 4 begin
+                pattern3
+        vd += 70
+        pattern3
+        vd += 70
+        pattern3
+        vd += 116
+        end
 
             if vd == 255 begin
                 next_pattern
+            i := pattern_state
             end
             
         
