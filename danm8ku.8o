@@ -157,6 +157,7 @@
     i += v0
     load v7
 
+    v8 := 0
     if vx == 255 begin
         i := bullet_count
         load v0
@@ -164,6 +165,7 @@
         v0 += 8
         i := bullet_count
         save v0
+        v8 := 1
     end
 
     i := BULLET_AREA
@@ -225,17 +227,29 @@
 
 : pattern2_shot1
     vc := random 31
-    
-    gogo_bullet x := 60 y := vc vx := 150 vy := 0 ax := 130 save v7 
-    gogo_bullet x := 60 y := vc vx := 150 vy := 0 ax := 134 save v7 
-    gogo_bullet x := 45 y := vc vx := 75 vy := 135 ax := 130 save v7    
-    gogo_bullet x := 45 y := vc vx := 75 vy := 10 ax := 130 save v7 
+    gogo_bullet
+    if v8 == 1 begin
+    vx := random 127
+    vx += 127
+    x := 60 y := vc  vy := 35 ax := 0 save v7
+    end
+
+    vc := random 31
+    gogo_bullet
+    if v8 == 1 begin
+    vx := random 127
+    vx += 127
+    x := 60 y := vc  vy := 155 ax := 0 save v7
+    end
+
 ;
 
 : pattern2
-    v0 := 0b00001111
+    v0 := 0b00000011
     v0 &= vd
-    if v0 == 0b00001111 then pattern2_shot1
+    if v0 == 0b00000011 begin
+       pattern2_shot1
+    end
 ;
 
 : show_you_lose_screen
