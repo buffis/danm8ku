@@ -4,31 +4,28 @@
 :alias y    v5
 :alias y_f  v7
 
-# Velocity (4)
+# Velocity (2)
 :alias vx   v0
 :alias vy   v1
 
 # Acceleration (2)
 :alias ax   v2
-:alias ay   v3
+:alias ay   v3  # Not actually used right now.
 
 :const BULLET_AREA 2000
 
 : bullet_count 0
-
 : player_position 5 15
-
 : ticks 0
+: pattern_state 0x00
 
 : bul   0xc0 0xc0
 
-: player_sprite 0xC0 0x60 0xC0
+: vstack 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 
-# OUCH
+: player_sprite 0xC0 0x60 0xC0
 : ouch_sprite1 0xEA 0xAA 0xAA 0xAA 0xEE 
 : ouch_sprite2 0xEA 0x8A 0x8E 0x8A 0xEA
-
-: pattern_state 0x00
 
 : destroy_bullet
     vx := 255
@@ -140,8 +137,8 @@
 ;
 
 : clear_state
-    i := ticks
     v0 := 0
+    i := ticks
     save v0
     i := pattern_state
     save v0
@@ -160,6 +157,9 @@
 ;
 
 : gogo_bullet
+    i := vstack
+    save v8
+
     i := bullet_count
     load v0
     
@@ -177,6 +177,9 @@
         save v0
         v8 := 1
     end
+
+    i := vstack
+    load v8
 
     i := BULLET_AREA
     i += va
@@ -249,7 +252,7 @@
         end
 
     end
-;
+    jump pattern_done
 
 : pattern2
     v0 := 0b00000011
@@ -271,85 +274,49 @@
         x := 60 y := vc  vy := 155 ax := 0 save v7
         end
     end
-;
+    jump pattern_done
 
+: digits100  0
+: digits10   0
+: digits1    0
+: pattern3values
+206 50  210 46  214 42  218 38  222 34  226 30
+230 26  234 22  238 18  242 14  246 10  250 6
+254 2   250 130 246 134 242 138 238 142 234 146
+230 150 226 154 222 158 218 162 214 166 210 170
+206 174
 : pattern3
-    if vd == 0 begin
-        gogo_bullet x := 60 y := 16 vx := 207 vy := 50 save v7
+    i := digits100
+    bcd vd
+    i := digits100
+    load v2
+    if v2 == 0 begin
+    if v0 == 1 then v1 += 10
+    if v0 == 2 then v1 += 20
+        v1 <<= v1
+        i += v1
+        load v1
+        gogo_bullet x := 60 y := 16 save v7
     end
-    if vd == 10 begin
-        gogo_bullet x := 60 y := 16 vx := 211 vy := 46 save v7
+    jump pattern_done
+
+: pattern4
+    v0 := 0b00001111
+    v0 &= vd
+    if v0 == 0b00001111 begin
+        vc := random 31
+        gogo_bullet x := 60 y := vc vx := 150 vy := 0 ax := 130 save v7 
+        gogo_bullet x := 60 y := vc vx := 150 vy := 0 ax := 134 save v7 
+        gogo_bullet x := 45 y := vc vx := 75 vy := 135 ax := 130 save v7    
+        gogo_bullet x := 45 y := vc vx := 75 vy := 10 ax := 130 save v7 
     end
-    if vd == 20 begin
-        gogo_bullet x := 60 y := 16 vx := 215 vy := 42 save v7
-    end
-    if vd == 30 begin
-        gogo_bullet x := 60 y := 16 vx := 219 vy := 38 save v7
-    end
-    if vd == 40 begin
-        gogo_bullet x := 60 y := 16 vx := 223 vy := 34 save v7
-    end
-    if vd == 50 begin
-        gogo_bullet x := 60 y := 16 vx := 227 vy := 30 save v7
-    end
-    if vd == 60 begin
-        gogo_bullet x := 60 y := 16 vx := 231 vy := 26 save v7
-    end
-    if vd == 70 begin
-        gogo_bullet x := 60 y := 16 vx := 235 vy := 22 save v7
-    end
-    if vd == 80 begin
-        gogo_bullet x := 60 y := 16 vx := 239 vy := 18 save v7
-    end
-    if vd == 90 begin
-        gogo_bullet x := 60 y := 16 vx := 243 vy := 14 save v7
-    end
-    if vd == 100 begin
-        gogo_bullet x := 60 y := 16 vx := 247 vy := 10 save v7
-    end
-    if vd == 110 begin
-        gogo_bullet x := 60 y := 16 vx := 251 vy := 6 save v7
-    end
-    if vd == 120 begin
-        gogo_bullet x := 60 y := 16 vx := 254 vy := 2 save v7
-    end
-    if vd == 130 begin
-        gogo_bullet x := 60 y := 16 vx := 251 vy := 130 save v7
-    end
-    if vd == 140 begin
-        gogo_bullet x := 60 y := 16 vx := 247 vy := 134 save v7
-    end
-    if vd == 150 begin
-        gogo_bullet x := 60 y := 16 vx := 243 vy := 138 save v7
-    end
-    if vd == 160 begin
-        gogo_bullet x := 60 y := 16 vx := 239 vy := 142 save v7
-    end
-    if vd == 170 begin
-        gogo_bullet x := 60 y := 16 vx := 235 vy := 146 save v7
-    end
-    if vd == 180 begin
-        gogo_bullet x := 60 y := 16 vx := 231 vy := 150 save v7
-    end
-    if vd == 190 begin
-        gogo_bullet x := 60 y := 16 vx := 227 vy := 154 save v7
-    end
-    if vd == 200 begin
-        gogo_bullet x := 60 y := 16 vx := 223 vy := 158 save v7
-    end
-    if vd == 210 begin
-        gogo_bullet x := 60 y := 16 vx := 219 vy := 162 save v7
-    end
-    if vd == 220 begin
-        gogo_bullet x := 60 y := 16 vx := 215 vy := 166 save v7
-    end
-    if vd == 230 begin
-        gogo_bullet x := 60 y := 16 vx := 211 vy := 170 save v7
-    end
-    if vd == 240 begin
-        gogo_bullet x := 60 y := 16 vx := 207 vy := 174 save v7
-    end
-;
+    jump pattern_done
+
+: patterns
+    jump pattern3
+    jump pattern2
+    jump pattern1
+    jump pattern4
 
 : show_you_lose_screen
     clear
@@ -399,38 +366,18 @@
                     i := ticks
                     save v0
                 end
+            else
+                i := pattern_state
+                load v0
+                jump0 patterns
             end
-
-    
-        i := pattern_state
-            load v0
-            if v0 == 0 begin
-        pattern1
-        end
-
-            i := pattern_state
-            load v0
-            if v0 == 2 begin
-                pattern2
-        end
-
-        i := pattern_state
-            load v0
-            if v0 == 4 begin
-                pattern3
-        vd += 70
-        pattern3
-        vd += 70
-        pattern3
-        vd += 116
-        end
+: pattern_done
 
             if vd == 255 begin
                 next_pattern
             i := pattern_state
             end
             
-        
             tick
 
             sync
