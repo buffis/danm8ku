@@ -158,7 +158,7 @@
 
 : gogo_bullet
     i := vstack
-    save v8
+    save v7
 
     i := bullet_count
     load v0
@@ -179,7 +179,7 @@
     end
 
     i := vstack
-    load v8
+    load v7
 
     i := BULLET_AREA
     i += va
@@ -313,9 +313,9 @@
     jump pattern_done
 
 : patterns
-    jump pattern3
-    jump pattern2
     jump pattern1
+    jump pattern2
+    jump pattern3
     jump pattern4
 
 : show_you_lose_screen
