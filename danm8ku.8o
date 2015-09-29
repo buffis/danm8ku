@@ -229,98 +229,14 @@
 
     i := player_position
     save v1
-
-    i := player_position
-    load v1
     v3 >>= v1
     v2 >>= v0
     i := player_sprite
     sprite v2 v3 3
 ;
 
-
-: pattern1
-    v0 := 0b00000011
-    v0 &= vd
-    if v0 == 0b00000011 begin
-        vc := random 31
-        gogo_bullet
-        if v8 == 1 begin
-        vx := random 63
-        vx += 170
-        x := 60 y := vc save v7
-        end
-
-    end
-    jump pattern_done
-
-: pattern2
-    v0 := 0b00000011
-    v0 &= vd
-    if v0 == 0b00000011 begin
-        vc := random 31
-        gogo_bullet
-        if v8 == 1 begin
-        vx := random 127
-        vx += 127
-        x := 60 y := vc  vy := 35 ax := 0 save v7
-        end
-
-        vc := random 31
-        gogo_bullet
-        if v8 == 1 begin
-        vx := random 127
-        vx += 127
-        x := 60 y := vc  vy := 155 ax := 0 save v7
-        end
-    end
-    jump pattern_done
-
-: digits100  0
-: digits10   0
-: digits1    0
-: pattern3values
-206 50  210 46  214 42  218 38  222 34  226 30
-230 26  234 22  238 18  242 14  246 10  250 6
-254 2   250 130 246 134 242 138 238 142 234 146
-230 150 226 154 222 158 218 162 214 166 210 170
-206 174
-: pattern3
-    i := digits100
-    bcd vd
-    i := digits100
-    load v2
-    if v2 == 0 begin
-    if v0 == 1 then v1 += 10
-    if v0 == 2 then v1 += 20
-        v1 <<= v1
-        i += v1
-        load v1
-        gogo_bullet x := 60 y := 16 save v7
-    end
-    jump pattern_done
-
-: pattern4
-    v0 := 0b00001111
-    v0 &= vd
-    if v0 == 0b00001111 begin
-        vc := random 31
-        gogo_bullet x := 60 y := vc vx := 150 vy := 0 ax := 130 save v7 
-        gogo_bullet x := 60 y := vc vx := 150 vy := 0 ax := 134 save v7 
-        gogo_bullet x := 45 y := vc vx := 75 vy := 135 ax := 130 save v7    
-        gogo_bullet x := 45 y := vc vx := 75 vy := 10 ax := 130 save v7 
-    end
-    jump pattern_done
-
-: patterns
-    jump pattern1
-    jump pattern2
-    jump pattern3
-    jump pattern4
-
 : show_you_lose_screen
     clear
-
     i := ouch_sprite1
     v0 := 25
     v1 := 13
@@ -340,6 +256,25 @@
     save v0
 ;
 
+: handle_pattern
+    i := pattern_state
+    load v0
+    vf := 1
+    v0 &= vf
+    if v0 == 1 begin
+        if vd == 140 begin
+            v0 := 254
+            i := ticks
+            save v0
+        end
+    else
+        i := pattern_state
+        load v0
+        jump0 patterns
+    end
+    : pattern_done
+;
+
 : main
     clear_bullets
     
@@ -356,30 +291,12 @@
             load v0
             vd := v0
 
-            i := pattern_state
-            load v0
-            vf := 1
-            v0 &= vf
-            if v0 == 1 begin
-                if vd == 140 begin
-                    v0 := 254
-                    i := ticks
-                    save v0
-                end
-            else
-                i := pattern_state
-                load v0
-                jump0 patterns
-            end
-: pattern_done
+            handle_pattern  # spawns bullets
 
-            if vd == 255 begin
+            if vd == 255 then
                 next_pattern
-            i := pattern_state
-            end
             
             tick
-
             sync
         else
             clear_state
@@ -387,3 +304,86 @@
             clear_bullets
         end
     again
+
+
+############################### PATTERNS BELOW ############################### 
+
+: pattern1
+    v0 := 0b00000011
+    v0 &= vd
+    if v0 == 0b00000011 begin
+        vc := random 31
+        gogo_bullet
+        if v8 == 1 begin
+            vx := random 63
+            vx += 170
+            x := 60 y := vc save v7
+        end
+    end
+    jump pattern_done
+
+: pattern2
+    v0 := 0b00000011
+    v0 &= vd
+    if v0 == 0b00000011 begin
+        vc := random 31
+        gogo_bullet
+        if v8 == 1 begin
+            vx := random 127
+            vx += 127
+            x := 60 y := vc  vy := 35 ax := 0 save v7
+        end
+
+        vc := random 31
+        gogo_bullet
+        if v8 == 1 begin
+            vx := random 127
+            vx += 127
+            x := 60 y := vc  vy := 155 ax := 0 save v7
+        end
+    end
+    jump pattern_done
+
+: digits100  0
+: digits10   0
+: digits1    0
+: pattern3values
+206 50  210 46  214 42  218 38  222 34  226 30
+230 26  234 22  238 18  242 14  246 10  250 6
+254 2   250 130 246 134 242 138 238 142 234 146
+230 150 226 154 222 158 218 162 214 166 210 170
+206 174
+: pattern3
+    i := digits100
+    bcd vd
+    i := digits100
+    load v2
+    if v2 == 0 begin
+        if v0 == 1 then v1 += 10
+        if v0 == 2 then v1 += 20
+        v1 <<= v1
+        i += v1
+        load v1
+        gogo_bullet x := 60 y := 16 save v7
+    end
+    jump pattern_done
+
+: pattern4
+    v0 := 0b00001111
+    v0 &= vd
+    if v0 == 0b00001111 begin
+        vc := random 31
+        x := 60 y := vc vx := 150 vy := 0
+        gogo_bullet ax := 130 save v7 
+        gogo_bullet ax := 134 save v7 
+        x := 45 y := vc vx := 75 ax := 130 
+        gogo_bullet vy := 135 save v7    
+        gogo_bullet vy := 10  save v7 
+    end
+    jump pattern_done
+
+: patterns
+    jump pattern1
+    jump pattern2
+    jump pattern3
+    jump pattern4
