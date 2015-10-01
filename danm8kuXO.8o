@@ -1,0 +1,409 @@
+# Position (4)
+:alias x    v4
+:alias x_f  v6
+:alias y    v5
+:alias y_f  v7
+
+# Velocity (2)
+:alias vx   v0
+:alias vy   v1
+
+# Acceleration (2)
+:alias ax   v2
+:alias ay   v3  # Not actually used right now.
+
+:const BULLET_AREA 2000
+
+: bullet_count 0
+: player_position 5 15
+: ticks 0
+: pattern_state 0x00
+
+: bul 0x00 0x70 0x70 0x70 0x00
+0x70 0x88 0x88 0x88 0x70 
+
+: vstack 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+
+: player_sprite 0x40 0xE8 0x3C 0x3C 0xE8 0x40 0x00 0x00 
+: ouch_sprite1 0xEA 0xAA 0xAA 0xAA 0xEE 
+: ouch_sprite2 0xEA 0x8A 0x8E 0x8A 0xEA
+
+: destroy_bullet
+    vx := 255
+    save_bullet
+;
+
+: move_bullet
+    # Handles velocity for x
+    vc := vx
+    vx <<= vx      # multiply by two and check for neg bit             
+    va := vf       # is negative velocity?
+    x_f += vx      # add v to fractional x
+    vx := vc
+
+    # Hack to avoid calling subroutines to do:
+    # if vf != 0 -> (va==0 -> x+=1, va==1 -> x-=1)
+    # on fractional overflow
+    va &= vf
+    vc := vf
+    vc <<= vc
+    x += vc
+    va <<= va
+    x -= va
+    x -= va
+
+    # Handles velocity for y
+    vc := vy
+    vy <<= vy      # multiply by two and check for neg bit       
+    va := vf       # is negative velocity?
+    y_f += vy      # add v to fractional x
+    vy := vc
+
+    # Hack to avoid calling subroutines to do:
+    # if vf != 0 -> (va==0 -> y+=1, va==1 -> y-=1)
+    # on fractional overflow
+    va &= vf
+    vc := vf
+    vc <<= vc
+    y += vc
+    va <<= va
+    y -= va
+    y -= va
+
+    # Handles acceleration for x
+    vc := ax
+    vc <<= vc      # multiply by two and check for neg bit             
+    va := vf       # is negative velocity?
+    vc >>= vc      # shift back, cause why not
+    
+    # ... keeps handling acceleration for x
+    if va == 0 begin        # positive acceleration
+        if vx > 127 begin   # negative velocity
+            vx -= ax
+            if vf == 0 then vx := 127  # overflow (wat?)
+            if vx < 128 then vx := 0
+
+        else            # positive velocity
+            vx += ax
+            if vf != 0 then vx := 127  # overflow
+            if vx > 127 then vx := 127
+        end
+     
+    else                    # negative acceleration
+        if vx > 127 begin   # negative velocity
+            vx += vc
+            if vf != 0 then vx := 254   # hack
+            if vx == 255 then vx := 254 # hack 
+        else            # positive velocity
+            vx -= vc
+            if vf == 0 then vx := 129  # overflow
+        end
+    end
+
+    # Do bounds checks
+    if x == -1 then destroy_bullet
+    if x == -2 then destroy_bullet
+    if y == -1 then destroy_bullet
+    if y == -2 then destroy_bullet
+    if x == 125 then destroy_bullet
+    if x == 126 then destroy_bullet
+    if y == 60 then destroy_bullet
+    if y == 61 then destroy_bullet
+;
+
+: save_bullet
+    i := BULLET_AREA
+    i += vb
+    save v7
+;
+
+: draw_bullets
+    vb := 0 # offset
+    loop
+        i := BULLET_AREA
+        i += vb
+        load v7
+        
+        # draw bullet if active
+        if vx != 255 begin
+	    plane 3
+            i := bul
+            sprite x y 5
+        end 
+        plane 1
+        
+        vb += 8 # sizeof bullet
+        if vb != 0 then
+    again
+;
+
+: act_bullets
+    vb := 0 # offset
+    loop
+        i := BULLET_AREA
+        i += vb
+        load v7
+        
+        if vx != 255 then move_bullet
+        if vx != 255 then save_bullet
+        
+        vb += 8 # sizeof bullet
+        if vb != 0 then
+    again
+;
+
+: clear_state
+    v0 := 0
+    i := ticks
+    save v0
+    i := pattern_state
+    save v0
+;
+
+: clear_bullets
+    vb := 0 # offset
+    i := BULLET_AREA
+    v0 := 255 v1 := 0 v2 := 0 v3 := 0
+    v4 := 0   v5 := 0 v6 := 0 v7 := 0 
+    loop
+        save v7
+        vb += 1
+        if vb != 32 then
+    again
+;
+
+: gogo_bullet
+    i := vstack
+    save v7
+
+    i := bullet_count
+    load v0
+    
+    i := BULLET_AREA
+    i += v0
+    load v7
+
+    v8 := 0
+    if vx == 255 begin
+        i := bullet_count
+        load v0
+        va := v0
+        v0 += 8
+        i := bullet_count
+        save v0
+        v8 := 1
+    end
+
+    i := vstack
+    load v7
+
+    i := BULLET_AREA
+    i += va
+;
+
+: sync
+    vf := delay
+    if vf != 0 then
+    loop
+        vf := delay
+        if vf != 0 then
+    again
+    vf := 1
+    delay := vf
+;
+
+: tick
+    i := ticks
+    load v0
+    v0 += 1
+    i := ticks
+    save v0
+;
+
+: update_player
+    i := player_position
+    load v1
+
+    v2 := 5
+    if v2 key begin
+        v1 += -2
+        if v1 == -1 then v1 := 1
+    end
+    v2 := 7
+    if v2 key begin
+        v0 += -2
+        if v0 == -1 then v0 := 1
+    end
+    v2 := 9
+    if v2 key begin
+        v0 += 2
+        if v0 == 71 then v0 := 69
+    end
+    v2 := 8
+    if v2 key begin
+        v1 += 2
+        if v1 == 121 then v1 := 119
+    end
+
+    i := player_position
+    save v1
+    v3 >>= v1
+    v2 >>= v0
+    i := player_sprite
+    sprite v2 v3 8
+;
+
+: show_you_lose_screen
+    clear
+    i := ouch_sprite1
+    v0 := 25
+    v1 := 13
+    sprite v0 v1 5
+    i := ouch_sprite2
+    v0 += 8
+    sprite v0 v1 5
+    v0 := key
+    v0 := key
+;   
+
+: next_pattern
+    i := pattern_state
+    load v0
+    v0 += 1
+    i := pattern_state
+    save v0
+;
+
+: handle_pattern
+    i := pattern_state
+    load v0
+    vf := 1
+    v0 &= vf
+    if v0 == 1 begin
+        if vd == 140 begin
+            v0 := 254
+            i := ticks
+            save v0
+        end
+    else
+        i := pattern_state
+        load v0
+        jump0 patterns
+    end
+    : pattern_done
+;
+
+: main
+    hires
+    clear_bullets
+    
+    loop
+        plane 3
+        clear
+
+        draw_bullets # do this first cause...
+        update_player
+
+        if vf != 1 begin
+            act_bullets  # ... this takes a long time
+
+            i := ticks
+            load v0
+            vd := v0
+
+            handle_pattern  # spawns bullets
+
+            if vd == 255 then
+                next_pattern
+            
+            tick
+            sync
+        else
+            clear_state
+            show_you_lose_screen
+            clear_bullets
+        end
+    again
+
+
+############################### PATTERNS BELOW ############################### 
+
+: pattern1
+    v0 := 0b00000011
+    v0 &= vd
+    if v0 == 0b00000011 begin
+        vc := random 63
+        gogo_bullet
+        if v8 == 1 begin
+            vx := random 63
+            vx += 170
+            x := 120 y := vc save v7
+        end
+    end
+    jump pattern_done
+
+: pattern2
+    v0 := 0b00000011
+    v0 &= vd
+    if v0 == 0b00000011 begin
+        vc := random 63
+        gogo_bullet
+        if v8 == 1 begin
+            vx := random 127
+            vx += 127
+            x := 120 y := vc  vy := 35 ax := 0 save v7
+        end
+
+        vc := random 63
+        gogo_bullet
+        if v8 == 1 begin
+            vx := random 127
+            vx += 127
+            x := 120 y := vc  vy := 155 ax := 0 save v7
+        end
+    end
+    jump pattern_done
+
+: digits100  0
+: digits10   0
+: digits1    0
+: pattern3values
+206 50  210 46  214 42  218 38  222 34  226 30
+230 26  234 22  238 18  242 14  246 10  250 6
+254 2   250 130 246 134 242 138 238 142 234 146
+230 150 226 154 222 158 218 162 214 166 210 170
+206 174
+: pattern3
+    i := digits100
+    bcd vd
+    i := digits100
+    load v2
+    if v2 == 0 begin
+        if v0 == 1 then v1 += 10
+        if v0 == 2 then v1 += 20
+        v1 <<= v1
+        i += v1
+        load v1
+        gogo_bullet x := 120 y := 32 save v7
+    end
+    jump pattern_done
+
+: pattern4
+    v0 := 0b00001111
+    v0 &= vd
+    if v0 == 0b00001111 begin
+        vc := random 31
+        x := 120 y := vc vx := 150 vy := 0
+        gogo_bullet ax := 130 save v7 
+        gogo_bullet ax := 134 save v7 
+        x := 90 y := vc vx := 75 ax := 130 
+        gogo_bullet vy := 135 save v7    
+        gogo_bullet vy := 10  save v7 
+    end
+    jump pattern_done
+
+: patterns
+    jump pattern1
+    jump pattern2
+    jump pattern3
+    jump pattern4
