@@ -19,7 +19,21 @@
 : ticks 0
 : pattern_state 0x00
 
-: bul   0xc0 0xc0
+
+: bul   0x00 0x60 0x60 0x00
+
+# ORDER OF THESE ARE IMPORTANT. DON'T REORDER.
+: bul_nop 0x00 0x00 0x00 0x00   # 0
+: bul_r 0x00 0xA0 0xA0 0x00     # 1
+: bul_l 0x00 0x50 0x50 0x00     # 2
+: UNUSED1 0 0 0 0               # 3 (unused)
+: bul_d 0x60 0x00 0x60 0x00     # 4
+: bul_dr 0x00 0x60 0x50 0x30    # 5
+: bul_dl 0x30 0x50 0x60 0x00    # 6
+: UNUSED2 0 0 0 0               # 7 (unused)
+: bul_u 0x00 0x60 0x00 0x60     # 8
+: bul_ur 0x00 0x60 0xA0 0xC0    # 9
+: bul_ul 0x00 0x60 0x50 0x30    # 10
 
 : vstack 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 
@@ -44,9 +58,10 @@
     # if vf != 0 -> (va==0 -> x+=1, va==1 -> x-=1)
     # on fractional overflow
     va &= vf
-    x += vf
-    x -= va
-    x -= va
+    v9 := vf
+    v9 -= va
+    v9 -= va
+    x += v9
 
     # Handles velocity for y
     vc := vy
@@ -59,9 +74,10 @@
     # if vf != 0 -> (va==0 -> y+=1, va==1 -> y-=1)
     # on fractional overflow
     va &= vf
-    y += vf
-    y -= va
-    y -= va
+    vd := vf
+    vd -= va
+    vd -= va
+    y += vd
 
     # Handles acceleration for x
     vc := ax
@@ -93,11 +109,23 @@
         end
     end
 
+    ay := v9
+    if v9 > 1 then
+      ay := 2
+    if vd > 1 begin
+      vd := 8
+      ay |= vd
+    else
+      vd <<= vd
+      vd <<= vd
+      ay |= vd
+    end
+   
+
+
     # Do bounds checks
-    if x == -1 then destroy_bullet
-    if y == -1 then destroy_bullet
-    if x == 62 then destroy_bullet
-    if y == 30 then destroy_bullet
+    if x > 61 then destroy_bullet
+    if y > 29 then destroy_bullet
 ;
 
 : save_bullet
@@ -114,7 +142,14 @@
         load v7
         
         # draw bullet if active
-        if vx != 255 begin i := bul sprite x y 2 end 
+        if vx != 255 begin
+            # This is pretty cool.
+            i := bul_nop
+            ay <<= ay
+            ay <<= ay
+            i += ay
+            sprite x y 4
+        end 
         
         vb += 8 # sizeof bullet
         if vb != 0 then
@@ -206,6 +241,11 @@
     i := player_position
     load v1
 
+    v3 >>= v1
+    v2 >>= v0
+    i := player_sprite
+    sprite v2 v3 3
+
     v2 := 5
     if v2 key begin
         v1 += -1
@@ -277,9 +317,17 @@
 
 : main
     clear_bullets
-    
+    clear    
+
+    i := player_position
+    load v1
+
+    v3 >>= v1
+    v2 >>= v0
+    i := player_sprite
+    sprite v2 v3 3
+
     loop
-        clear
 
         draw_bullets # do this first cause...
         update_player
@@ -302,11 +350,18 @@
             clear_state
             show_you_lose_screen
             clear_bullets
+            clear
         end
     again
 
 
 ############################### PATTERNS BELOW ############################### 
+
+: pew_pew
+    save v7
+    i := bul
+    sprite x y 4
+;
 
 : pattern1
     v0 := 0b00000011
@@ -317,7 +372,7 @@
         if v8 == 1 begin
             vx := random 63
             vx += 170
-            x := 60 y := vc save v7
+            x := 60 y := vc pew_pew
         end
     end
     jump pattern_done
@@ -382,8 +437,14 @@
     end
     jump pattern_done
 
+: pattern5
+    if vd == 5 begin
+        gogo_bullet x := 25 y := 15 vx := 199 vy := 0 pew_pew
+    end
+    jump pattern_done
+
 : patterns
-    jump pattern1
     jump pattern2
-    jump pattern3
-    jump pattern4
+    jump pattern2
+    jump pattern2
+    jump pattern2
