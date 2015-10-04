@@ -19,21 +19,31 @@
 : ticks 0
 : pattern_state 0x00
 
-
-: bul   0x00 0x60 0x60 0x00
-
 # ORDER OF THESE ARE IMPORTANT. DON'T REORDER.
 : bul_nop 0x00 0x00 0x00 0x00   # 0
 : bul_r 0x00 0xA0 0xA0 0x00     # 1
 : bul_l 0x00 0x50 0x50 0x00     # 2
-: UNUSED1 0 0 0 0               # 3 (unused)
+: bul   0x00 0x60 0x60 0x00     # 3 (not used for movement)
 : bul_d 0x60 0x00 0x60 0x00     # 4
-: bul_dr 0x00 0x60 0x50 0x30    # 5
+: bul_dr 0xC0 0xA0 0x60 0x00    # 5
 : bul_dl 0x30 0x50 0x60 0x00    # 6
-: UNUSED2 0 0 0 0               # 7 (unused)
+: UNUSED2 0 0 0 0               # 7 (unused) TODO: Store something here?
 : bul_u 0x00 0x60 0x00 0x60     # 8
 : bul_ur 0x00 0x60 0xA0 0xC0    # 9
 : bul_ul 0x00 0x60 0x50 0x30    # 10
+
+# ORDER OF THESE ARE IMPORTANT. DON'T REORDER.
+: clr_nop 0x00 0x60 0x60 0x00   # 0
+: clr_r 0x00 0xC0 0xC0 0x00     # 1
+: clr_l 0x00 0x30 0x30 0x00     # 2
+: UNUSED3   0x00 0x60 0x60 0x00 # 3 (unused) TODO: Store something here?
+: clr_d 0x60 0x60 0x00 0x00     # 4
+: clr_dr 0xC0 0xC0 0x00 0x00    # 5
+: clr_dl 0x30 0x30 0x00 0x00    # 6
+: UNUSED4 0 0 0 0               # 7 (unused) TODO: Store something here?
+: clr_u 0x00 0x00 0x60 0x60     # 8
+: clr_ur 0x00 0x00 0xC0 0xC0    # 9
+: clr_ul 0x00 0x00 0x30 0x30    # 10
 
 : vstack 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 
@@ -44,6 +54,11 @@
 : destroy_bullet
     vx := 255
     save_bullet
+    i := clr_nop 
+    ay <<= ay
+    ay <<= ay
+    i += ay
+    sprite x y 4
 ;
 
 : move_bullet
@@ -120,12 +135,10 @@
       vd <<= vd
       ay |= vd
     end
-   
-
 
     # Do bounds checks
     if x > 61 then destroy_bullet
-    if y > 29 then destroy_bullet
+    if y > 30 then destroy_bullet
 ;
 
 : save_bullet
@@ -215,6 +228,7 @@
 
     i := vstack
     load v7
+    ay := 0
 
     i := BULLET_AREA
     i += va
@@ -328,7 +342,6 @@
     sprite v2 v3 3
 
     loop
-
         draw_bullets # do this first cause...
         update_player
 
@@ -346,13 +359,14 @@
             
             tick
             sync
-        else
-            clear_state
-            show_you_lose_screen
-            clear_bullets
-            clear
+            again
         end
-    again
+        
+    clear_state
+    show_you_lose_screen
+    clear_bullets
+    clear
+    jump main
 
 
 ############################### PATTERNS BELOW ############################### 
@@ -386,7 +400,7 @@
         if v8 == 1 begin
             vx := random 127
             vx += 127
-            x := 60 y := vc  vy := 35 ax := 0 save v7
+            x := 57 y := vc  vy := 35 ax := 0 pew_pew
         end
 
         vc := random 31
@@ -394,7 +408,7 @@
         if v8 == 1 begin
             vx := random 127
             vx += 127
-            x := 60 y := vc  vy := 155 ax := 0 save v7
+            x := 57 y := vc  vy := 155 ax := 0 pew_pew
         end
     end
     jump pattern_done
@@ -419,7 +433,7 @@
         v1 <<= v1
         i += v1
         load v1
-        gogo_bullet x := 60 y := 16 save v7
+        gogo_bullet x := 60 y := 16 pew_pew
     end
     jump pattern_done
 
@@ -429,22 +443,22 @@
     if v0 == 0b00001111 begin
         vc := random 31
         x := 60 y := vc vx := 150 vy := 0
-        gogo_bullet ax := 130 save v7 
-        gogo_bullet ax := 134 save v7 
+        gogo_bullet ax := 130 pew_pew 
+        gogo_bullet ax := 134 pew_pew 
         x := 45 y := vc vx := 75 ax := 130 
-        gogo_bullet vy := 135 save v7    
-        gogo_bullet vy := 10  save v7 
+        gogo_bullet vy := 135 pew_pew    
+        gogo_bullet vy := 10  pew_pew 
     end
     jump pattern_done
 
 : pattern5
     if vd == 5 begin
-        gogo_bullet x := 25 y := 15 vx := 199 vy := 0 pew_pew
+        gogo_bullet x := 25 y := 15 vx := 55 vy := 133 pew_pew
     end
     jump pattern_done
 
 : patterns
+    jump pattern1
     jump pattern2
-    jump pattern2
-    jump pattern2
-    jump pattern2
+    jump pattern3
+    jump pattern4
