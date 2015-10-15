@@ -159,6 +159,9 @@
 : player_sprite 0xC0 0x60 0xC0
 : ouch_sprite1 0xEA 0xAA 0xAA 0xAA 0xEE 
 : ouch_sprite2 0xEA 0x8A 0x8E 0x8A 0xEA
+: win_sprite1  0x8B 0x8A 0x8A 0xAA 0x53
+: win_sprite2  0xD1 0x51 0x51 0x55 0xCA
+
 
 : rightarea
 0x1E 0x10 0x10 0x10 0x1E 0x10 0x10 0x10 
@@ -416,6 +419,19 @@
     v0 := key
 ;   
 
+: show_you_win_screen
+    clear
+    i := win_sprite1
+    v0 := 25
+    v1 := 13
+    sprite v0 v1 5
+    i := win_sprite2
+    v0 += 8
+    sprite v0 v1 5
+    v0 := key
+    v0 := key
+;   
+
 : next_pattern
     i := pattern_state
     load v0
@@ -475,6 +491,7 @@
 : after_title
     difficuly_select
 
+    clear_state
     clear_bullets
     clear
 
@@ -508,10 +525,7 @@
             again
         end
         
-    clear_state
     show_you_lose_screen
-    clear_bullets
-    clear
     jump after_title
 
 
@@ -625,12 +639,77 @@
     end
     jump pattern_done
 
+: pattern6
+    v0 := 0b00000111
+    v0 &= vd
+    if v0 == 0b00000111 begin
+        v0 := 0b00100000
+        v0 &= vd
+        if v0 != 0 begin
+            y := 28
+            vy := 160
+        else
+            y := 0
+            vy := 30
+        end
+        x := random 31
+        x += 31
+        vx := 190
+        gogo_bullet pew_pew 
+    end
+    jump pattern_done
+
+: pattern7
+    v0 := 0b00000111
+    v0 &= vd
+    if v0 == 0b00000111 begin
+        v0 := 0b00010000
+        v0 &= vd
+        if v0 != 0 begin
+            y := 28
+            vy := 160
+        else
+            y := 0
+            vy := 30
+        end
+
+        vx := 0
+        ax := 0
+        x := random 31
+        gogo_bullet pew_pew 
+    end
+    jump pattern_done
+
+: pattern8
+    v0 := 0b00001111
+    v0 &= vd
+    if v0 == 0b00001111 begin
+        y >>= vd
+        y >>= y
+        y >>= y
+        x := 50
+        vx := 95
+        vy := 0
+        ax := 133
+        gogo_bullet pew_pew 
+        vy := 20
+        gogo_bullet pew_pew 
+        vy := 148
+        gogo_bullet pew_pew 
+    end
+    jump pattern_done
+
+: youwin
+    show_you_win_screen
+    jump after_title
+
 : patterns
     jump pattern1
     jump pattern2
     jump pattern3
     jump pattern4
     jump pattern5
-    jump pattern2
-    jump pattern3
-    jump pattern4
+    jump pattern6
+    jump pattern7
+    jump pattern8
+    jump youwin
