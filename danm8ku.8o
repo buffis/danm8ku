@@ -250,12 +250,9 @@
     ay |= vd
 
     # Do bounds checks
-    if x == 254 then destroy_bullet
-    if x == 255 then destroy_bullet
+    if x > 62 then destroy_bullet
     if y > 29 then destroy_bullet
 
-    # Remote bullets flying to the right. Probably not needed?
-    # if x == 62 then destroy_bullet
 ;
 
 : save_bullet
@@ -426,23 +423,18 @@
     i := pattern_state
     save v0
   
-    i := rightareaok 
     v2 := 61
-    if v0 == 2 begin
-       v1 := 1
-       sprite v2 v1 3
-    end
-    if v0 == 4 begin
-       v1 := 5
-       sprite v2 v1 3
-    end
-    if v0 == 6 begin
-       v1 := 9
-       sprite v2 v1 3
-    end
-    if v0 == 8 begin
-       v1 := 13
-       sprite v2 v1 3
+    v1 := 1
+    v0 >>= v0
+    if vf == 0 begin
+        loop
+            if v0 != 1 begin
+                v1 += 4
+                v0 += -1
+                again
+            end
+        i := rightareaok 
+        sprite v2 v1 3
     end
 ;
 
@@ -606,13 +598,39 @@
     jump pattern_done
 
 : pattern5
-    if vd == 5 begin
-        gogo_bullet x := 25 y := 15 vx := 55 vy := 133 pew_pew
+    v0 := 0b00011111
+    v0 &= vd
+    if v0 == 0b00011111 begin
+        vc := random 31
+        gogo_bullet x := 35 y := vc vx := 66 vy := 12 ax := 129 pew_pew
+        gogo_bullet x := 35 y := vc vx := 66 vy := 130 ax := 129 pew_pew
+    end
+    if vd == 64 begin
+        vc := random 31
+        gogo_bullet x := 50 y := vc vx := 230 vy := 0 pew_pew
+        gogo_bullet x := 54 y := vc vx := 230 vy := 0 pew_pew
+        gogo_bullet x := 58 y := vc vx := 230 vy := 0 pew_pew
+    end
+    if vd == 128 begin
+        vc := random 31
+        gogo_bullet x := 50 y := vc vx := 230 vy := 0 pew_pew
+        gogo_bullet x := 54 y := vc vx := 230 vy := 0 pew_pew
+        gogo_bullet x := 58 y := vc vx := 230 vy := 0 pew_pew
+    end
+    if vd == 192 begin
+        vc := random 31
+        gogo_bullet x := 50 y := vc vx := 230 vy := 0 pew_pew
+        gogo_bullet x := 54 y := vc vx := 230 vy := 0 pew_pew
+        gogo_bullet x := 58 y := vc vx := 230 vy := 0 pew_pew
     end
     jump pattern_done
 
 : patterns
     jump pattern1
+    jump pattern2
+    jump pattern3
+    jump pattern4
+    jump pattern5
     jump pattern2
     jump pattern3
     jump pattern4
