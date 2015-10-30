@@ -2,7 +2,7 @@
 # Danm8ku                             
 # Bjorn Kempen 2015                   
 # https://github.com/buffis/danm8ku   
-# http://johnearnest.github.io/Octo/index.html?gist=27f904f919e809ac75e3
+# http://johnearnest.github.io/Octo/index.html?gist=3d30bb0d6bab9f1c5d43
 #######################################
 
 #######################################
@@ -11,6 +11,7 @@
 
 :const VSTACK_SPACE 2900
 :const BULLET_AREA  3000
+:alias ticks        v9
 
 #######################################
 # Data
@@ -82,7 +83,7 @@
 : bul_dl 0x30 0x50 0x60 0x00    # 6
 : bullet_count 0                # 7 (unused so storing other stuff here)
 : player_position 5 15
-: ticks 0
+: UNUSED1 0
 : bul_u 0x00 0x60 0x00 0x60     # 8
 : bul_ur 0x00 0x60 0xA0 0xC0    # 9
 : bul_ul 0x00 0x60 0x50 0x30    # 10
@@ -98,7 +99,7 @@
 : clr_dr 0xC0 0xC0 0x00 0x00    # 5
 : clr_dl 0x30 0x30 0x00 0x00    # 6
 : rightareaok 0xA0 0x40 0xA0    # 7 (unused so storing other stuff here)
-: UNUSED1 0x00
+: UNUSED2 0x00
 : clr_u 0x00 0x00 0x60 0x60     # 8
 : clr_ur 0x00 0x00 0xC0 0xC0    # 9
 : clr_ul 0x00 0x00 0x30 0x30    # 10
@@ -130,23 +131,18 @@
     i := DATAE0
     v0 := 0
     v1 := random 31
-    if v1 > 9 begin
-      if v1 < 21 then
-        jump posttitle
-    end
+    v1 += -10
+    if v1 < 11 then jump posttitle
+    v1 += 10
     v2 := 60
     loop
       if v0 == 32 then jump posttitle
       sprite v0 v1 2
       sprite v2 v1 2
-      if vf == 0 begin
-        v0 += 4
-        v2 += -4
-        if v0 != 64 then
-          again
-      end
-  jump posttitle
-;
+      if vf != 1 then jump posttitle
+      v0 += 4
+      v2 += -4
+    again
 
 : show_you_win_screen
     clear
@@ -239,10 +235,10 @@
     # if vf != 0 -> (va==0 -> x+=1, va==1 -> x-=1)
     # on fractional overflow
     va &= vf
-    v9 := vf
-    v9 -= va
-    v9 -= va
-    x += v9
+    v8 := vf
+    v8 -= va
+    v8 -= va
+    x += v8
 
     # Handles velocity for y
     vc := vy
@@ -267,9 +263,9 @@
            vx -= ax
     end
 
-    # Set ay to values used to get movement sprites.
-    so := v9
-    if v9 > 1 then
+    # Set so to values used to get movement sprites.
+    so := v8
+    if v8 > 1 then
       so := 2
     if vd > 1 then
       vd := 2
@@ -376,8 +372,6 @@
 
 : clear_state
     v0 := 0
-    i := ticks
-    save v0
     i := pattern_state
     save v0
 ;
@@ -389,14 +383,6 @@
     again
     vf := 1
     delay := vf
-;
-
-: tick
-    i := ticks
-    load v0
-    v0 += 1
-    i := ticks
-    save v0
 ;
 
 : update_player
@@ -473,16 +459,14 @@
         if vf != 1 begin
             act_bullets  # ... this takes a long time
 
-            i := ticks
-            load v0
-            vd := v0
+            vd := ticks
 
             handle_pattern  # spawns bullets
 
             if vd == 255 then
                 next_pattern
             
-            tick
+            ticks += 1
             sync
             again
         end
@@ -522,11 +506,8 @@
     vf := 1
     v0 &= vf
     if v0 == 1 begin
-        if vd == 140 begin
-            v0 := 254
-            i := ticks
-            save v0
-        end
+        if vd == 140 then
+            ticks := 254
     else
         i := pattern_state
         load v0
@@ -546,17 +527,15 @@
 #######################################
 
 : pattern1
-    v0 := 0b00000011
+    v0 := 0b00000111
     v0 &= vd
-    if v0 == 0b00000011 begin
+    if v0 == 0b00000111 begin
         vc := random 31
         gogo_bullet
-        if v8 == 1 begin
-            ax := 2
-            vx := random 63
-            vx += 170
-            x := 55 y := vc pew_pew
-        end
+        ax := 2
+        vx := random 63
+        vx += 170
+        x := 55 y := vc pew_pew
     end
     jump pattern_done
 
@@ -611,9 +590,9 @@
     if v0 == 0b00001111 begin
         vc := random 31
         x := 60 y := vc vx := 150 vy := 0
-        gogo_bullet ax := 4 pew_pew 
         gogo_bullet ax := 8 pew_pew 
-        x := 45 y := vc vx := 75 ax := 4
+        gogo_bullet ax := 4 pew_pew 
+        x := 45 vx := 75
         gogo_bullet vy := 135 pew_pew    
         gogo_bullet vy := 10  pew_pew 
     end
@@ -622,8 +601,8 @@
 : pattern5_shot1
         vc := random 31
         gogo_bullet x := 50 y := vc vx := 230 vy := 0 pew_pew
-        gogo_bullet x := 54 y := vc vx := 230 vy := 0 pew_pew
-        gogo_bullet x := 58 y := vc vx := 230 vy := 0 pew_pew
+        gogo_bullet x := 54 pew_pew
+        gogo_bullet x := 58 pew_pew
 ;
 : pattern5
     v0 := 0b00011111
@@ -631,7 +610,7 @@
     if v0 == 0b00011111 begin
         vc := random 31
         gogo_bullet x := 35 y := vc vx := 66 vy := 12 ax := 2 pew_pew
-        gogo_bullet x := 35 y := vc vx := 66 vy := 130 ax := 2 pew_pew
+        gogo_bullet vy := 130 pew_pew
     end
     if vd == 64 then
         pattern5_shot1
