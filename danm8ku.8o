@@ -2,7 +2,7 @@
 # Danm8ku                             
 # Bjorn Kempen 2015                   
 # https://github.com/buffis/danm8ku   
-# http://johnearnest.github.io/Octo/index.html?gist=3d30bb0d6bab9f1c5d43
+# http://johnearnest.github.io/Octo/index.html?gist=a125da47abda2ab66dcd
 #######################################
 
 #######################################
@@ -371,6 +371,7 @@
 #######################################
 
 : clear_state
+    ticks := 0
     v0 := 0
     i := pattern_state
     save v0
